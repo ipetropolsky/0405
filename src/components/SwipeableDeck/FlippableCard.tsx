@@ -11,7 +11,6 @@ import styles from '@/components/SwipeableDeck/SwipeableDeck.module.less';
 interface FlippableCardProps {
     card: CardData;
     side: CardSide;
-    isMainCard: boolean;
 }
 
 const SIDE_INDEX: Record<CardSide, number> = {
@@ -19,7 +18,7 @@ const SIDE_INDEX: Record<CardSide, number> = {
     back: 1,
 };
 
-function FlippableCard({ card, side, isMainCard }: FlippableCardProps) {
+function FlippableCard({ card, side }: FlippableCardProps) {
     const sideIndex = SIDE_INDEX[side];
     const rotation = useMotionValue(sideIndex);
     const shadow = useMotionValue(1);
@@ -89,7 +88,7 @@ function FlippableCard({ card, side, isMainCard }: FlippableCardProps) {
                     opacity: frontOpacity,
                 }}
             >
-                <CardFace card={card} side="front" isMainCard={isMainCard} />
+                <CardFace card={card} tone="front" />
             </motion.div>
 
             <motion.div
@@ -99,7 +98,7 @@ function FlippableCard({ card, side, isMainCard }: FlippableCardProps) {
                     opacity: backOpacity,
                 }}
             >
-                <CardFace card={card} side="back" isMainCard={isMainCard} />
+                <CardFace card={card} tone="back" />
             </motion.div>
         </div>
     );

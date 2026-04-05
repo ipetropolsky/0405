@@ -18,50 +18,40 @@
     background: #393943;
 }
 
-.header {
-    display: flex;
-    height: 60px;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    box-sizing: border-box;
-}
-
-.badge {
-    font-family: 'Roboto', sans-serif;
-    font-size: 13px;
-    font-style: italic;
-    line-height: 1;
-    opacity: 0.92;
-    padding: 8px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-}
-
 .content {
     display: flex;
     flex: 1;
     flex-direction: column;
-}
-
-.topHalf {
-    display: flex;
-    flex: 1;
-    justify-content: space-between;
-}
-
-.title {
-    display: flex;
-    flex-grow: 1;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 0 20px;
+    justify-content: center;
+    padding: 32px 20px 28px;
     box-sizing: border-box;
 }
 
-.titleText {
-    margin-top: auto;
+.phraseLayout {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+.segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.centerBlock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.phraseText {
     font-family: 'Roboto Slab', serif;
     font-size: clamp(30px, 8vw, 36px);
     font-weight: 800;
@@ -72,40 +62,22 @@
     text-wrap: balance;
 }
 
-.bottomHalf {
-    display: flex;
-    flex: 2;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 16px;
+.compactPhraseText {
+    font-size: clamp(24px, 6.2vw, 28px);
+    line-height: 1.08;
+    letter-spacing: 0.02em;
+}
+
+.extraCompactPhraseText {
+    font-size: clamp(20px, 5.2vw, 24px);
+    line-height: 1.12;
+    letter-spacing: 0.01em;
 }
 
 .posText {
-    padding: 0 20px;
-    box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
     font-size: 14px;
     font-style: italic;
     text-align: center;
     opacity: 0.95;
-}
-
-.bottomBlock {
-    padding: 0 20px;
-    box-sizing: border-box;
-}
-
-.hintText {
-    padding: 0 20px;
-    box-sizing: border-box;
-    font-family: 'Roboto', sans-serif;
-    font-size: 13px;
-    line-height: 1.35;
-    text-align: center;
-    opacity: 0.86;
-}
-
-.footer {
-    height: 60px;
 }

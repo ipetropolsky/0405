@@ -3,72 +3,101 @@ import type { CardData } from '@/types/cards';
 export const INITIAL_DECK: CardData[] = [
     {
         id: '1',
-        pos: 'существительное',
-        sides: {
-            front: {
-                word: 'окно',
-                example: 'Я открыл <hl>окно</hl>, потому что в комнате было душно.',
-            },
-            back: {
-                word: 'окно',
-                example: 'На <hl>окне</hl> стоит маленькое растение.',
-            },
+        pos: 'сущ.',
+        phraseStart: 'Дорогой',
+        options: {
+            left: 'Кирилл',
+            right: 'друг',
+            up: 'коллега',
+            down: 'Пух',
         },
+        hiddenAfter: '!',
+        phraseEnd: undefined,
     },
     {
         id: '2',
-        pos: 'глагол',
-        sides: {
-            front: {
-                word: 'одолжить',
-                example: 'Можно мне <hl>одолжить</hl> твою книгу до завтра?',
-            },
-            back: {
-                word: 'одолжить',
-                example: 'Он часто просит <hl>одолжить</hl> ему инструменты.',
-            },
+        pos: 'прил.',
+        phraseStart: 'В этот',
+        options: {
+            left: 'прекрасный',
+            right: 'солнечный',
+            up: 'унылый',
+            down: 'здабедательный',
         },
+        phraseEnd: 'день',
     },
     {
         id: '3',
-        pos: 'прилагательное',
-        sides: {
-            front: {
-                word: 'тихий',
-                example: 'Это очень <hl>тихая</hl> улица по вечерам.',
-            },
-            back: {
-                word: 'тихий',
-                example: 'Сегодня пёс на удивление <hl>тихий</hl>.',
-            },
+        pos: 'гл.',
+        phraseStart: 'спешим',
+        options: {
+            left: 'уведомить',
+            right: 'поздравить',
+            up: 'поблагодарить',
+            down: 'ошарашить',
         },
+        phraseEnd: 'тебя',
     },
     {
         id: '4',
-        pos: 'существительное',
-        sides: {
-            front: {
-                word: 'чек',
-                example: 'Сохрани <hl>чек</hl>, если вдруг что-то не будет работать.',
-            },
-            back: {
-                word: 'чек',
-                example: 'Я выбросил <hl>чек</hl>, как только вышел из магазина.',
-            },
+        pos: 'сущ.',
+        phraseStart: 'с долгожданным',
+        options: {
+            left: 'Днём Рождение',
+            right: 'Днём Рождения',
+            up: 'Днём Рожденья',
+            down: 'Днём Варенья',
         },
+        phraseEnd: undefined,
     },
     {
         id: '5',
-        pos: 'глагол',
-        sides: {
-            front: {
-                word: 'заметить',
-                example: 'Я не сразу смог <hl>заметить</hl> эту ошибку.',
-            },
-            back: {
-                word: 'заметить',
-                example: 'Трудно не <hl>заметить</hl> этот новый знак.',
-            },
+        pos: 'гл.',
+        phraseStart: 'и',
+        options: {
+            left: 'подарить',
+            right: 'пожелать',
+            up: 'передать',
+            down: 'вручить',
         },
+        phraseEnd: 'тебе',
+    },
+    {
+        id: '6',
+        pos: 'прил.',
+        phraseStart: 'этот',
+        options: {
+            left: 'скромный',
+            right: 'скучный',
+            up: 'полезный',
+            down: 'суровый',
+        },
+        hiddenAfter: ',',
+    },
+    {
+        id: '7',
+        pos: 'прил.',
+        phraseStart: 'но очень',
+        options: {
+            left: 'скромный',
+            right: 'скучный',
+            up: 'полезный',
+            down: 'суровый',
+        },
+        phraseEnd: 'подарок',
+        hiddenAfter: '!',
+    },
+    {
+        id: '8',
+        pos: 'сущ.',
+        phraseStart: undefined,
+        options: {
+            left: 'Вот этот шнурок',
+            right: 'Бутылку бургундского',
+            up: 'Подписку на z.ai',
+            down: 'Промо-код на пиццу',
+        },
+        hiddenAfter: '!',
+        phraseEnd: undefined,
     },
 ];

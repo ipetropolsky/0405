@@ -41,7 +41,7 @@ function BackgroundCard({ card, deckLength, index, params }: BackgroundCardProps
                 ease: [0.22, 1, 0.36, 1],
             }}
         >
-            <CardFace card={card} side={params.cardSide} isMainCard={false} />
+            <CardFace card={card} tone={params.cardSide} />
         </motion.div>
     );
 }

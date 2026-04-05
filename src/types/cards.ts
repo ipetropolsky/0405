@@ -2,15 +2,13 @@ export type CardSide = 'front' | 'back';
 
 export type SwipeDirection = 'left' | 'right' | 'up' | 'down';
 
-export interface CardFaceContent {
-    word: string;
-    example: string;
-}
-
 export interface CardData {
     id: string;
     pos: string;
-    sides: Record<CardSide, CardFaceContent>;
+    phraseStart?: string;
+    phraseEnd?: string;
+    hiddenAfter?: string;
+    options: Record<SwipeDirection, string>;
 }
 
 export interface PrecalculatedParams {
