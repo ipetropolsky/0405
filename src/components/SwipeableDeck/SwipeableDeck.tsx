@@ -1,7 +1,7 @@
 import React from 'react';
-import { AnimatePresence, animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
-import { INITIAL_DECK } from '@/data/initialDeck';
+import { CORRECT_OPTION_IDS, INITIAL_DECK, SUCCESS_TEXT } from '@/data/initialDeck';
 import type { CardSide, SwipeDirection } from '@/types/cards';
 
 import BackgroundDeck from '@/components/SwipeableDeck/BackgroundDeck';
@@ -28,7 +28,35 @@ import styles from '@/components/SwipeableDeck/SwipeableDeck.module.less';
 interface CompletedChoice {
     cardId: string;
     direction: SwipeDirection;
+    optionId: string;
 }
+
+type FinalStatus = 'idle' | 'checking' | 'success' | 'error';
+
+interface CompletedSegment {
+    optionId: string;
+    text: string;
+}
+
+const CHECKING_DELAY_MS = 3000;
+const CONFETTI_PIECES = [...Array(18).keys()];
+
+const UI_TEXT = {
+    front: {
+        check: 'Проверить',
+        retry: 'Вызов принят!',
+        checking: 'Идёт проверка результата…',
+        fallback: 'Колода закончилась.',
+        error: 'Почти получилось :) Попробуй ещё, подарок ждёт!',
+    },
+    back: {
+        check: 'Proveri',
+        retry: 'Pokušaj ponovo',
+        checking: 'Proveravamo rezultat…',
+        fallback: 'Špil je završen.',
+        error: 'Skoro dobro. Pogrešni delovi su označeni crvenom.',
+    },
+} as const;
 
 function SwipeableDeck() {
     const [deck, setDeck] = React.useState(INITIAL_DECK);
@@ -36,23 +64,80 @@ function SwipeableDeck() {
     const [currentSide, setCurrentSide] = React.useState<CardSide>('front');
     const [revealedDirection, setRevealedDirection] = React.useState<SwipeDirection | null>(null);
     const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
+    const [finalStatus, setFinalStatus] = React.useState<FinalStatus>('idle');
     const paramsRef = React.useRef(createParamsMap(INITIAL_DECK));
     const cardsById = React.useMemo(() => Object.fromEntries(INITIAL_DECK.map((card) => [card.id, card])), []);
+    const checkingTimeoutRef = React.useRef<number | null>(null);
 
     const currentCard = deck[0] ?? null;
     const backgroundCards = React.useMemo(() => deck.slice(1, 5), [deck]);
     const currentCardId = currentCard?.id ?? null;
-    const chosenText = React.useMemo(
-        () =>
-            completedChoices
+    const completedSegmentsBySide = React.useMemo<Record<CardSide, CompletedSegment[]>>(
+        () => ({
+            front: completedChoices
                 .map((choice) => {
                     const card = cardsById[choice.cardId];
-                    return card ? buildChosenText(card, choice.direction, currentSide) : '';
+                    return card
+                        ? {
+                              optionId: choice.optionId,
+                              text: buildChosenText(card, choice.direction, 'front'),
+                          }
+                        : null;
                 })
-                .filter(Boolean)
-                .join(' '),
-        [cardsById, completedChoices, currentSide]
+                .filter((segment): segment is CompletedSegment => Boolean(segment?.text)),
+            back: completedChoices
+                .map((choice) => {
+                    const card = cardsById[choice.cardId];
+                    return card
+                        ? {
+                              optionId: choice.optionId,
+                              text: buildChosenText(card, choice.direction, 'back'),
+                          }
+                        : null;
+                })
+                .filter((segment): segment is CompletedSegment => Boolean(segment?.text)),
+        }),
+        [cardsById, completedChoices]
     );
+    const completedSegments = completedSegmentsBySide[currentSide];
+    const chosenTextBySide = React.useMemo<Record<CardSide, string>>(
+        () => ({
+            front: completedSegmentsBySide.front.map((segment) => segment.text).join(' '),
+            back: completedSegmentsBySide.back.map((segment) => segment.text).join(' '),
+        }),
+        [completedSegmentsBySide]
+    );
+    const isCorrectResult = React.useMemo(
+        () =>
+            completedChoices.length === CORRECT_OPTION_IDS.length &&
+            completedChoices.every((choice, index) => choice.optionId === CORRECT_OPTION_IDS[index]),
+        [completedChoices]
+    );
+    const incorrectIndices = React.useMemo(
+        () =>
+            completedSegments.reduce<number[]>((indices, segment, index) => {
+                if (segment.optionId !== CORRECT_OPTION_IDS[index]) {
+                    indices.push(index);
+                }
+
+                return indices;
+            }, []),
+        [completedSegments]
+    );
+    const shouldHideLastSegment = React.useMemo(() => {
+        const lastIndex = completedSegments.length - 1;
+
+        if (lastIndex < 0) {
+            return false;
+        }
+
+        return incorrectIndices.some((incorrectIndex) => incorrectIndex < lastIndex);
+    }, [completedSegments.length, incorrectIndices]);
+    const visibleCompletedSegments = React.useMemo(
+        () => (shouldHideLastSegment ? completedSegments.slice(0, -1) : completedSegments),
+        [completedSegments, shouldHideLastSegment]
+    );
+    const uiText = UI_TEXT[currentSide];
 
     const cardX = useMotionValue(0);
     const cardY = useMotionValue(0);
@@ -63,6 +148,14 @@ function SwipeableDeck() {
     const mainCardRotate = useTransform(() => cardBaseRotate.get() + cardX.get() / 30);
     const dragOffsetRef = React.useRef({ x: 0, y: 0 });
     const dragDirectionRef = React.useRef<SwipeDirection | null>(null);
+
+    React.useEffect(() => {
+        return () => {
+            if (checkingTimeoutRef.current !== null) {
+                window.clearTimeout(checkingTimeoutRef.current);
+            }
+        };
+    }, []);
 
     React.useEffect(() => {
         for (const card of deck) {
@@ -130,7 +223,14 @@ function SwipeableDeck() {
                 return;
             }
 
-            setCompletedChoices((previousChoices) => [...previousChoices, { cardId: currentCard.id, direction }]);
+            setCompletedChoices((previousChoices) => [
+                ...previousChoices,
+                {
+                    cardId: currentCard.id,
+                    direction,
+                    optionId: currentCard.optionIds[direction],
+                },
+            ]);
             setDeck(deck.slice(1));
         },
         [currentCard, deck]
@@ -213,18 +313,103 @@ function SwipeableDeck() {
         [cardOpacity, cardX, cardY, currentCard, handleSwipeComplete, isAnimatingOut]
     );
 
+    const handleCheckResult = React.useCallback(() => {
+        if (finalStatus === 'error') {
+            window.location.reload();
+            return;
+        }
+
+        if (finalStatus !== 'idle') {
+            return;
+        }
+
+        setFinalStatus('checking');
+        checkingTimeoutRef.current = window.setTimeout(() => {
+            setFinalStatus(isCorrectResult ? 'success' : 'error');
+            checkingTimeoutRef.current = null;
+        }, CHECKING_DELAY_MS);
+    }, [finalStatus, isCorrectResult]);
+
     if (!currentCard) {
         return (
             <div className={styles.screen}>
                 <motion.div
-                    className={styles.finishedSummary}
+                    className={[
+                        styles.finishedSummary,
+                        finalStatus === 'error' ? styles.finishedSummaryError : '',
+                        finalStatus === 'success' ? styles.finishedSummarySuccessBuzz : '',
+                    ]
+                        .filter(Boolean)
+                        .join(' ')}
                     initial={{ opacity: 0, y: 40, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.55, ease: [0.18, 0.89, 0.32, 1.15] }}
                 >
+                    {finalStatus === 'success' ? (
+                        <div className={styles.confettiOverlay} aria-hidden="true">
+                            {[0, 1, 2].map((burstIndex) => (
+                                <div
+                                    key={burstIndex}
+                                    className={styles.confettiBurst}
+                                    style={{ animationDelay: `${burstIndex * 0.8}s` }}
+                                >
+                                    {CONFETTI_PIECES.map((pieceIndex) => (
+                                        <span
+                                            key={`${burstIndex}:${pieceIndex}`}
+                                            className={styles.confettiPiece}
+                                            style={
+                                                {
+                                                    '--confetti-x': `${(pieceIndex - 8.5) * 12}px`,
+                                                    '--confetti-y': `${120 + (pieceIndex % 5) * 26}px`,
+                                                    '--confetti-rotate': `${pieceIndex * 21}deg`,
+                                                    '--confetti-delay': `${pieceIndex * 0.03}s`,
+                                                } as React.CSSProperties
+                                            }
+                                        />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
+
                     <div className={styles.finishedSummaryText}>
-                        {chosenText || (currentSide === 'front' ? 'Колода закончилась.' : 'Špil je završen.')}
+                        {visibleCompletedSegments.length ? (
+                            visibleCompletedSegments.map((segment, index) => {
+                                const isIncorrect = finalStatus === 'error' && incorrectIndices.includes(index);
+
+                                return (
+                                    <React.Fragment key={`${segment.optionId}:${index}`}>
+                                        {index > 0 ? ' ' : null}
+                                        <span className={isIncorrect ? styles.incorrectSegment : undefined}>
+                                            {segment.text}
+                                        </span>
+                                    </React.Fragment>
+                                );
+                            })
+                        ) : (
+                            <span>{uiText.fallback}</span>
+                        )}
                     </div>
+
+                    {finalStatus === 'checking' ? (
+                        <div className={styles.checkingState}>
+                            <span className={styles.loader} aria-hidden="true" />
+                            <span className={styles.checkingText}>{uiText.checking}</span>
+                        </div>
+                    ) : null}
+
+                    {finalStatus === 'success' ? <div className={styles.successText}>{SUCCESS_TEXT}</div> : null}
+
+                    {finalStatus === 'error' ? <div className={styles.errorText}>{uiText.error}</div> : null}
+
+                    <button
+                        className={styles.resultButton}
+                        type="button"
+                        onClick={handleCheckResult}
+                        disabled={finalStatus === 'checking' || finalStatus === 'success'}
+                    >
+                        {finalStatus === 'error' ? uiText.retry : uiText.check}
+                    </button>
                 </motion.div>
             </div>
         );
@@ -234,21 +419,27 @@ function SwipeableDeck() {
         <div className={styles.screen}>
             <div className={styles.deckLayout}>
                 <div className={styles.summaryPanel}>
-                    <AnimatePresence initial={false}>
-                        <motion.div
-                            key={currentSide}
-                            className={styles.summaryTextLayer}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{
-                                duration: FLIP_ANIMATION_DURATION / 1000,
-                                ease: [0.455, 0.03, 0.515, 0.955],
-                            }}
-                        >
-                            <div className={styles.summaryText}>{chosenText || '\u00A0'}</div>
-                        </motion.div>
-                    </AnimatePresence>
+                    <motion.div
+                        className={styles.summaryTextLayer}
+                        animate={{ opacity: currentSide === 'front' ? 1 : 0 }}
+                        transition={{
+                            duration: FLIP_ANIMATION_DURATION / 1000,
+                            ease: [0.455, 0.03, 0.515, 0.955],
+                        }}
+                    >
+                        <div className={styles.summaryText}>{chosenTextBySide.front || '\u00A0'}</div>
+                    </motion.div>
+
+                    <motion.div
+                        className={styles.summaryTextLayer}
+                        animate={{ opacity: currentSide === 'back' ? 1 : 0 }}
+                        transition={{
+                            duration: FLIP_ANIMATION_DURATION / 1000,
+                            ease: [0.455, 0.03, 0.515, 0.955],
+                        }}
+                    >
+                        <div className={styles.summaryText}>{chosenTextBySide.back || '\u00A0'}</div>
+                    </motion.div>
                 </div>
 
                 <div className={styles.stage}>

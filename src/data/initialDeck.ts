@@ -1,8 +1,18 @@
 import type { CardData } from '@/types/cards';
 
+export const CORRECT_OPTION_IDS = ['1.2', '2.2', '3.2', '4.4', '5.1', '6.2', '7.4', '8.3'] as const;
+
+export const SUCCESS_TEXT = 'Правильно! Активируй свой доступ в кабинете GoWords на z.ai';
+
 export const INITIAL_DECK: CardData[] = [
     {
         id: '1',
+        optionIds: {
+            left: '1.1',
+            right: '1.2',
+            up: '1.3',
+            down: '1.4',
+        },
         ru: {
             pos: 'сущ.',
             phraseStart: 'Дорогой',
@@ -28,6 +38,12 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '2',
+        optionIds: {
+            left: '2.1',
+            right: '2.2',
+            up: '2.3',
+            down: '2.4',
+        },
         ru: {
             pos: 'прил.',
             phraseStart: 'В этот',
@@ -35,7 +51,7 @@ export const INITIAL_DECK: CardData[] = [
                 left: 'прекрасный',
                 right: 'солнечный',
                 up: 'унылый',
-                down: 'знаменательный',
+                down: 'воскресный',
             },
             phraseEnd: 'день',
         },
@@ -53,14 +69,20 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '3',
+        optionIds: {
+            left: '3.1',
+            right: '3.2',
+            up: '3.3',
+            down: '3.4',
+        },
         ru: {
             pos: 'гл.',
             phraseStart: 'спешим',
             options: {
-                left: 'уведомить',
+                left: 'подставить',
                 right: 'поздравить',
-                up: 'поблагодарить',
-                down: 'ошарашить',
+                up: 'уведомить',
+                down: 'исправить',
             },
             phraseEnd: 'тебя',
         },
@@ -68,18 +90,24 @@ export const INITIAL_DECK: CardData[] = [
             pos: 'gl.',
             phraseStart: 'žurimo da te',
             options: {
-                left: 'obavestimo',
-                right: 'čestitamo',
-                up: 'zahvalimo',
-                down: 'šokiramo',
+                left: 'sapletemo',
+                right: 'obradujemo',
+                up: 'obavestimo',
+                down: 'ispravimo',
             },
         },
     },
     {
         id: '4',
+        optionIds: {
+            left: '4.1',
+            right: '4.2',
+            up: '4.3',
+            down: '4.4',
+        },
         ru: {
             pos: 'сущ.',
-            phraseStart: 'с долгожданным',
+            phraseStart: 'с',
             options: {
                 left: 'Днём Рождение',
                 right: 'Днём Рождения',
@@ -100,6 +128,12 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '5',
+        optionIds: {
+            left: '5.1',
+            right: '5.2',
+            up: '5.3',
+            down: '5.4',
+        },
         ru: {
             pos: 'гл.',
             phraseStart: 'и',
@@ -125,6 +159,12 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '6',
+        optionIds: {
+            left: '6.1',
+            right: '6.2',
+            up: '6.3',
+            down: '6.4',
+        },
         ru: {
             pos: 'прил.',
             phraseStart: 'этот',
@@ -150,6 +190,12 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '7',
+        optionIds: {
+            left: '7.1',
+            right: '7.2',
+            up: '7.3',
+            down: '7.4',
+        },
         ru: {
             pos: 'прил.',
             phraseStart: 'но очень',
@@ -177,6 +223,12 @@ export const INITIAL_DECK: CardData[] = [
     },
     {
         id: '8',
+        optionIds: {
+            left: '8.1',
+            right: '8.2',
+            up: '8.3',
+            down: '8.4',
+        },
         ru: {
             pos: 'сущ.',
             options: {
