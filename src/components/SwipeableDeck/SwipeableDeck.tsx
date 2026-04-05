@@ -42,6 +42,12 @@ interface CompletedSegment {
 
 const CHECKING_DELAY_MS = 3000;
 const CONFETTI_BURST_DELAYS = [0, 650, 1300] as const;
+const ARROW_DIRECTION_MAP: Record<string, SwipeDirection> = {
+    ArrowLeft: 'left',
+    ArrowRight: 'right',
+    ArrowUp: 'up',
+    ArrowDown: 'down',
+};
 
 const encodeOptionIds = (optionIds: readonly string[]): string => window.btoa(optionIds.join('|'));
 
@@ -214,6 +220,29 @@ function SwipeableDeck() {
             }
         };
     }, []);
+
+    React.useEffect(() => {
+        if (!currentCard || isAnimatingOut) {
+            return undefined;
+        }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const direction = ARROW_DIRECTION_MAP[event.key];
+
+            if (!direction) {
+                return;
+            }
+
+            event.preventDefault();
+            setRevealedDirection(direction);
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [currentCard, isAnimatingOut]);
 
     React.useEffect(() => {
         if (finalStatus !== 'success') {
