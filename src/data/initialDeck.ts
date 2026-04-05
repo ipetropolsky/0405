@@ -88,7 +88,7 @@ export const INITIAL_DECK: CardData[] = [
         },
         sr: {
             pos: 'gl.',
-            phraseStart: 'žurimo da te',
+            phraseStart: 'žurimo da ti',
             options: {
                 left: 'podmetnemo',
                 right: 'čestitamo',
@@ -117,12 +117,11 @@ export const INITIAL_DECK: CardData[] = [
         },
         sr: {
             pos: 'imen.',
-            phraseStart: 'sa',
             options: {
-                left: 'Rođendanjem',
-                right: 'Rođendanom',
-                up: 'Danom Rođenja',
-                down: 'Danom Džema',
+                left: 'Rođendanje',
+                right: 'Rođendan',
+                up: 'Dan Rođenja',
+                down: 'Dan Džema',
             },
         },
     },
@@ -147,14 +146,13 @@ export const INITIAL_DECK: CardData[] = [
         },
         sr: {
             pos: 'gl.',
-            phraseStart: 'i',
+            phraseStart: 'i da ti',
             options: {
                 left: 'poklonimo',
                 right: 'poželimo',
                 up: 'predamo',
                 down: 'uručimo',
             },
-            phraseEnd: 'ti',
         },
     },
     {
