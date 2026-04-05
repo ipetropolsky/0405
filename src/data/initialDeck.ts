@@ -31,7 +31,7 @@ export const INITIAL_DECK: CardData[] = [
                 left: 'Kirile',
                 right: 'prijatelju',
                 up: 'kolega',
-                down: 'Puše',
+                down: 'Pu',
             },
             hiddenAfter: '!',
         },
