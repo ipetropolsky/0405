@@ -258,41 +258,6 @@
     cursor: default;
 }
 
-.confettiOverlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.confettiBurst {
-    position: absolute;
-    inset: 0;
-    animation: confettiBurst 1.2s ease-out forwards;
-    opacity: 0;
-}
-
-.confettiPiece {
-    position: absolute;
-    top: 22%;
-    left: 50%;
-    height: 12px;
-    width: 8px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #ff7f11 0%, #ffd166 100%);
-    animation: confettiPiece 1.2s ease-out forwards;
-    animation-delay: var(--confetti-delay);
-    transform: translate(-50%, -50%) rotate(var(--confetti-rotate));
-}
-
-.confettiPiece:nth-child(3n) {
-    background: linear-gradient(180deg, #00b4d8 0%, #90e0ef 100%);
-}
-
-.confettiPiece:nth-child(3n + 1) {
-    background: linear-gradient(180deg, #ff4d6d 0%, #ff8fa3 100%);
-}
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -334,33 +299,6 @@
     }
     75% {
         transform: translate3d(-1px, 0, 0);
-    }
-}
-
-@keyframes confettiBurst {
-    0% {
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-
-@keyframes confettiPiece {
-    0% {
-        transform: translate(-50%, -50%) rotate(var(--confetti-rotate));
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    100% {
-        transform: translate(calc(-50% + var(--confetti-x)), calc(-50% + var(--confetti-y)))
-            rotate(calc(var(--confetti-rotate) + 260deg));
-        opacity: 0;
     }
 }
 

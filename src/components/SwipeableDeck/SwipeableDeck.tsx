@@ -1,4 +1,5 @@
 import React from 'react';
+import confetti from 'canvas-confetti';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
 import { CORRECT_OPTION_IDS, INITIAL_DECK, SUCCESS_TEXT } from '@/data/initialDeck';
@@ -39,7 +40,7 @@ interface CompletedSegment {
 }
 
 const CHECKING_DELAY_MS = 3000;
-const CONFETTI_PIECES = [...Array(18).keys()];
+const CONFETTI_BURST_DELAYS = [0, 650, 1300] as const;
 
 const UI_TEXT = {
     front: {
@@ -47,20 +48,78 @@ const UI_TEXT = {
         retry: 'Вызов принят!',
         checking: 'Идёт проверка результата…',
         fallback: 'Колода закончилась.',
-        error: 'Почти получилось :) Попробуй ещё, подарок ждёт!',
+        error1: 'Почти получилось :)',
+        error2: 'Попробуй ещё, подарок ждёт!',
     },
     back: {
         check: 'Proveri',
-        retry: 'Pokušaj ponovo',
+        retry: 'Izazov prihvaćen!',
         checking: 'Proveravamo rezultat…',
         fallback: 'Špil je završen.',
-        error: 'Skoro dobro. Pogrešni delovi su označeni crvenom.',
+        error1: 'Zamalo :)',
+        error2: 'Pokušaj ponovo, poklon te čeka!',
     },
 } as const;
 
+const getDirectionByOptionId = (cardId: string, optionId: string): SwipeDirection => {
+    const card = INITIAL_DECK.find((deckCard) => deckCard.id === cardId);
+
+    if (!card) {
+        throw new Error(`Card ${cardId} not found`);
+    }
+
+    const direction = (Object.entries(card.optionIds).find(([, value]) => value === optionId)?.[0] ??
+        null) as SwipeDirection | null;
+
+    if (!direction) {
+        throw new Error(`Option ${optionId} not found for card ${cardId}`);
+    }
+
+    return direction;
+};
+
+const createCompletedChoices = (optionIds: readonly string[]): CompletedChoice[] =>
+    optionIds.map((optionId) => {
+        const [cardId] = optionId.split('.');
+        const direction = getDirectionByOptionId(cardId, optionId);
+
+        return {
+            cardId,
+            direction,
+            optionId,
+        };
+    });
+
+const getBubuPreset = (): { deck: typeof INITIAL_DECK; completedChoices: CompletedChoice[] } | null => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const bubu = new URLSearchParams(window.location.search).get('bubu');
+
+    if (bubu === 'true') {
+        return {
+            deck: [],
+            completedChoices: createCompletedChoices(CORRECT_OPTION_IDS),
+        };
+    }
+
+    if (bubu === 'false') {
+        return {
+            deck: [],
+            completedChoices: createCompletedChoices([...CORRECT_OPTION_IDS.slice(0, -1), '8.4']),
+        };
+    }
+
+    return null;
+};
+
 function SwipeableDeck() {
-    const [deck, setDeck] = React.useState(INITIAL_DECK);
-    const [completedChoices, setCompletedChoices] = React.useState<CompletedChoice[]>([]);
+    const bubuPreset = React.useMemo(() => getBubuPreset(), []);
+    const [deck, setDeck] = React.useState(() => bubuPreset?.deck ?? INITIAL_DECK);
+    const [completedChoices, setCompletedChoices] = React.useState<CompletedChoice[]>(
+        () => bubuPreset?.completedChoices ?? []
+    );
     const [currentSide, setCurrentSide] = React.useState<CardSide>('front');
     const [revealedDirection, setRevealedDirection] = React.useState<SwipeDirection | null>(null);
     const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
@@ -156,6 +215,54 @@ function SwipeableDeck() {
             }
         };
     }, []);
+
+    React.useEffect(() => {
+        if (finalStatus !== 'success') {
+            return undefined;
+        }
+
+        const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+        const jitter = () => (Math.random() - 0.5) * 0.03;
+        const particleCount = 28;
+        const centerX = 0.5;
+        const centerY = 0.42;
+        const defaults = {
+            startVelocity: 34,
+            ticks: 96,
+            scalar: 2.85,
+            zIndex: 2200,
+            disableForReducedMotion: true,
+        };
+        const timeouts = CONFETTI_BURST_DELAYS.map((delay) =>
+            window.setTimeout(() => {
+                void confetti({
+                    ...defaults,
+                    particleCount,
+                    spread: rand(60, 85),
+                    angle: rand(30, 70),
+                    origin: {
+                        x: Math.max(0, centerX - 0.25 + jitter()),
+                        y: Math.max(0, centerY + jitter()),
+                    },
+                });
+
+                void confetti({
+                    ...defaults,
+                    particleCount,
+                    spread: rand(60, 85),
+                    angle: rand(110, 150),
+                    origin: {
+                        x: Math.min(1, centerX + 0.25 + jitter()),
+                        y: Math.max(0, centerY + jitter()),
+                    },
+                });
+            }, delay)
+        );
+
+        return () => {
+            timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        };
+    }, [finalStatus]);
 
     React.useEffect(() => {
         for (const card of deck) {
@@ -345,33 +452,6 @@ function SwipeableDeck() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.55, ease: [0.18, 0.89, 0.32, 1.15] }}
                 >
-                    {finalStatus === 'success' ? (
-                        <div className={styles.confettiOverlay} aria-hidden="true">
-                            {[0, 1, 2].map((burstIndex) => (
-                                <div
-                                    key={burstIndex}
-                                    className={styles.confettiBurst}
-                                    style={{ animationDelay: `${burstIndex * 0.8}s` }}
-                                >
-                                    {CONFETTI_PIECES.map((pieceIndex) => (
-                                        <span
-                                            key={`${burstIndex}:${pieceIndex}`}
-                                            className={styles.confettiPiece}
-                                            style={
-                                                {
-                                                    '--confetti-x': `${(pieceIndex - 8.5) * 12}px`,
-                                                    '--confetti-y': `${120 + (pieceIndex % 5) * 26}px`,
-                                                    '--confetti-rotate': `${pieceIndex * 21}deg`,
-                                                    '--confetti-delay': `${pieceIndex * 0.03}s`,
-                                                } as React.CSSProperties
-                                            }
-                                        />
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    ) : null}
-
                     <div className={styles.finishedSummaryText}>
                         {visibleCompletedSegments.length ? (
                             visibleCompletedSegments.map((segment, index) => {
@@ -391,6 +471,15 @@ function SwipeableDeck() {
                         )}
                     </div>
 
+                    <button
+                        className={styles.resultButton}
+                        type="button"
+                        onClick={handleCheckResult}
+                        disabled={finalStatus === 'checking' || finalStatus === 'success'}
+                    >
+                        {finalStatus === 'error' ? uiText.retry : uiText.check}
+                    </button>
+
                     {finalStatus === 'checking' ? (
                         <div className={styles.checkingState}>
                             <span className={styles.loader} aria-hidden="true" />
@@ -400,16 +489,12 @@ function SwipeableDeck() {
 
                     {finalStatus === 'success' ? <div className={styles.successText}>{SUCCESS_TEXT}</div> : null}
 
-                    {finalStatus === 'error' ? <div className={styles.errorText}>{uiText.error}</div> : null}
-
-                    <button
-                        className={styles.resultButton}
-                        type="button"
-                        onClick={handleCheckResult}
-                        disabled={finalStatus === 'checking' || finalStatus === 'success'}
-                    >
-                        {finalStatus === 'error' ? uiText.retry : uiText.check}
-                    </button>
+                    {finalStatus === 'error' ? (
+                        <div className={styles.errorText}>
+                            <div>{uiText.error1}</div>
+                            <div>{uiText.error2}</div>
+                        </div>
+                    ) : null}
                 </motion.div>
             </div>
         );
