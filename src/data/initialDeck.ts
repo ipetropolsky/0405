@@ -3,71 +3,71 @@ import type { CardData } from '@/types/cards';
 export const INITIAL_DECK: CardData[] = [
     {
         id: '1',
-        pos: 'imenica',
+        pos: 'существительное',
         sides: {
             front: {
-                word: 'window',
-                example: 'Otvorio je <hl>prozor</hl> jer je bilo zagušljivo.',
+                word: 'окно',
+                example: 'Я открыл <hl>окно</hl>, потому что в комнате было душно.',
             },
             back: {
-                word: 'prozor',
-                example: 'Na <hl>prozoru</hl> stoji mala biljka.',
+                word: 'окно',
+                example: 'На <hl>окне</hl> стоит маленькое растение.',
             },
         },
     },
     {
         id: '2',
-        pos: 'glagol',
+        pos: 'глагол',
         sides: {
             front: {
-                word: 'to borrow',
-                example: 'Mogu li da <hl>pozajmim</hl> tvoju knjigu do sutra?',
+                word: 'одолжить',
+                example: 'Можно мне <hl>одолжить</hl> твою книгу до завтра?',
             },
             back: {
-                word: 'pozajmiti',
-                example: 'On često <hl>pozajmi</hl> alat od komšije.',
+                word: 'одолжить',
+                example: 'Он часто просит <hl>одолжить</hl> ему инструменты.',
             },
         },
     },
     {
         id: '3',
-        pos: 'pridev',
+        pos: 'прилагательное',
         sides: {
             front: {
-                word: 'quiet',
-                example: 'Ovo je baš <hl>mirna</hl> ulica uveče.',
+                word: 'тихий',
+                example: 'Это очень <hl>тихая</hl> улица по вечерам.',
             },
             back: {
-                word: 'miran',
-                example: 'Pas je danas neobično <hl>miran</hl>.',
+                word: 'тихий',
+                example: 'Сегодня пёс на удивление <hl>тихий</hl>.',
             },
         },
     },
     {
         id: '4',
-        pos: 'imenica',
+        pos: 'существительное',
         sides: {
             front: {
-                word: 'receipt',
-                example: 'Sačuvaj <hl>račun</hl> ako nešto ne bude radilo.',
+                word: 'чек',
+                example: 'Сохрани <hl>чек</hl>, если вдруг что-то не будет работать.',
             },
             back: {
-                word: 'račun',
-                example: 'Bacio sam <hl>račun</hl> čim sam izašao iz radnje.',
+                word: 'чек',
+                example: 'Я выбросил <hl>чек</hl>, как только вышел из магазина.',
             },
         },
     },
     {
         id: '5',
-        pos: 'glagol',
+        pos: 'глагол',
         sides: {
             front: {
-                word: 'to notice',
-                example: 'Nisam odmah <hl>primetio</hl> tu grešku.',
+                word: 'заметить',
+                example: 'Я не сразу смог <hl>заметить</hl> эту ошибку.',
             },
             back: {
-                word: 'primetiti',
-                example: 'Teško je ne <hl>primetiti</hl> taj novi znak.',
+                word: 'заметить',
+                example: 'Трудно не <hl>заметить</hl> этот новый знак.',
             },
         },
     },
