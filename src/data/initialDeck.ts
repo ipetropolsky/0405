@@ -90,8 +90,8 @@ export const INITIAL_DECK: CardData[] = [
             pos: 'gl.',
             phraseStart: 'žurimo da te',
             options: {
-                left: 'sapletemo',
-                right: 'obradujemo',
+                left: 'podmetnemo',
+                right: 'čestitamo',
                 up: 'obavestimo',
                 down: 'ispravimo',
             },
@@ -117,12 +117,12 @@ export const INITIAL_DECK: CardData[] = [
         },
         sr: {
             pos: 'imen.',
-            phraseStart: 'sa dugo očekivanim',
+            phraseStart: 'sa',
             options: {
-                left: 'rođendanjem',
-                right: 'rođendanom',
-                up: 'danom rođenja',
-                down: 'danom džema',
+                left: 'Rođendanjem',
+                right: 'Rođendanom',
+                up: 'Danom Rođenja',
+                down: 'Danom Džema',
             },
         },
     },
@@ -243,7 +243,7 @@ export const INITIAL_DECK: CardData[] = [
             pos: 'imen.',
             options: {
                 left: 'Ovu pertlu',
-                right: 'Flašu burgundca',
+                right: 'Bocu burgundskog',
                 up: 'Pretplatu na z.ai',
                 down: 'Promo-kod za picu',
             },
