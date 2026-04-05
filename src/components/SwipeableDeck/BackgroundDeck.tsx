@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { CardData, CardSide, PrecalculatedParams } from '@/types/cards';
+import type { CardData, PrecalculatedParams } from '@/types/cards';
 
 import BackgroundCard from '@/components/SwipeableDeck/BackgroundCard';
 
@@ -8,10 +8,9 @@ interface BackgroundDeckProps {
     cards: CardData[];
     deckLength: number;
     paramsMap: Record<string, PrecalculatedParams>;
-    side: CardSide;
 }
 
-function BackgroundDeck({ cards, deckLength, paramsMap, side }: BackgroundDeckProps) {
+function BackgroundDeck({ cards, deckLength, paramsMap }: BackgroundDeckProps) {
     return cards.map((card, index) => {
         const params = paramsMap[card.id];
 
@@ -26,7 +25,6 @@ function BackgroundDeck({ cards, deckLength, paramsMap, side }: BackgroundDeckPr
                 deckLength={deckLength}
                 index={index + 1}
                 params={params}
-                side={side}
             />
         );
     });

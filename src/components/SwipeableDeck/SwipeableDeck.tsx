@@ -128,15 +128,17 @@ const getBubuPreset = (): { deck: typeof INITIAL_DECK; completedChoices: Complet
 
 function SwipeableDeck() {
     const bubuPreset = React.useMemo(() => getBubuPreset(), []);
+    const paramsRef = React.useRef(createParamsMap(INITIAL_DECK));
     const [deck, setDeck] = React.useState(() => bubuPreset?.deck ?? INITIAL_DECK);
     const [completedChoices, setCompletedChoices] = React.useState<CompletedChoice[]>(
         () => bubuPreset?.completedChoices ?? []
     );
-    const [currentSide, setCurrentSide] = React.useState<CardSide>('front');
+    const [currentSide, setCurrentSide] = React.useState<CardSide>(
+        () => paramsRef.current[INITIAL_DECK[0]?.id]?.cardSide ?? 'front'
+    );
     const [revealedDirection, setRevealedDirection] = React.useState<SwipeDirection | null>(null);
     const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
     const [finalStatus, setFinalStatus] = React.useState<FinalStatus>('idle');
-    const paramsRef = React.useRef(createParamsMap(INITIAL_DECK));
     const cardsById = React.useMemo(() => Object.fromEntries(INITIAL_DECK.map((card) => [card.id, card])), []);
     const checkingTimeoutRef = React.useRef<number | null>(null);
 
@@ -316,6 +318,7 @@ function SwipeableDeck() {
         cardScale.set(DECK_SCALE);
         cardBaseRotate.set(params.rotationDeg);
         cardOpacity.set(1);
+        setCurrentSide(params.cardSide);
 
         const appearanceOptions = {
             duration: APPEAR_ANIMATION_DURATION / 1000,
@@ -343,6 +346,16 @@ function SwipeableDeck() {
         (direction: SwipeDirection) => {
             if (!currentCard) {
                 return;
+            }
+
+            const nextCard = deck[1];
+
+            if (nextCard) {
+                const nextParams = paramsRef.current[nextCard.id];
+
+                if (nextParams) {
+                    setCurrentSide(nextParams.cardSide);
+                }
             }
 
             setCompletedChoices((previousChoices) => [
@@ -543,12 +556,7 @@ function SwipeableDeck() {
                 </div>
 
                 <div className={styles.stage}>
-                    <BackgroundDeck
-                        cards={backgroundCards}
-                        deckLength={deck.length}
-                        paramsMap={paramsRef.current}
-                        side={currentSide}
-                    />
+                    <BackgroundDeck cards={backgroundCards} deckLength={deck.length} paramsMap={paramsRef.current} />
 
                     <motion.div
                         className={styles.cardWrapper}
