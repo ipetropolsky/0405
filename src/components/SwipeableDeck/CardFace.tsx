@@ -75,9 +75,9 @@ function PhraseBlock({ text, className = '', reservedLines = 1 }: PhraseBlockPro
 function CardFace({ card, tone, revealedDirection = null }: CardFaceProps) {
     const content = getCardTranslation(card, tone);
     const className = [styles.side, tone === 'front' ? styles.frontSide : styles.backSide].join(' ');
-    const hiddenWord = revealedDirection ? normalizeSpaces(content.options[revealedDirection]) : '…';
-    const phraseStart = content.phraseStart ? normalizeSpaces(content.phraseStart) : null;
-    const phraseEnd = content.phraseEnd ? normalizeSpaces(content.phraseEnd) : null;
+    const hiddenWord = revealedDirection ? content.options[revealedDirection] : '…';
+    const phraseStart = content.phraseStart ?? null;
+    const phraseEnd = content.phraseEnd ?? null;
     const optionValues = [
         content.options.left,
         content.options.right,
