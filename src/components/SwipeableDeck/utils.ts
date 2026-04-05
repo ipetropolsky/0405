@@ -1,10 +1,11 @@
-import type { CardData, PrecalculatedParams, SwipeDirection } from '@/types/cards';
+import type { CardData, CardSide, PrecalculatedParams, SwipeDirection } from '@/types/cards';
 
 import {
     ADDITIONAL_BOTTOM_RADIUS,
     MAX_ROTATION_ANGLE_DEG,
     SAFE_ZONE_RADIUS_X,
     SAFE_ZONE_RADIUS_Y,
+    SIDE_TO_LOCALE,
 } from '@/components/SwipeableDeck/constants';
 
 export const randomCardParams = (): PrecalculatedParams => ({
@@ -16,6 +17,19 @@ export const createParamsMap = (deck: CardData[]): Record<string, PrecalculatedP
     Object.fromEntries(deck.map((card) => [card.id, randomCardParams()])) as Record<string, PrecalculatedParams>;
 
 export const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
+
+export const getCardTranslation = (card: CardData, side: CardSide) => card[SIDE_TO_LOCALE[side]];
+
+export const buildChosenText = (card: CardData, direction: SwipeDirection, side: CardSide): string => {
+    const content = getCardTranslation(card, side);
+    const segment = [content.phraseStart, content.options[direction], content.phraseEnd].filter(Boolean).join(' ');
+
+    if (!segment) {
+        return '';
+    }
+
+    return `${segment}${content.hiddenAfter ?? ''}`;
+};
 
 export const getDirection = (x: number, y: number): SwipeDirection | null => {
     const isInSafeZone =

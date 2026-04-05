@@ -1,50 +1,65 @@
 import React from 'react';
-import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { AnimatePresence, animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
 import { INITIAL_DECK } from '@/data/initialDeck';
-import type { CardData, SwipeDirection } from '@/types/cards';
+import type { CardSide, SwipeDirection } from '@/types/cards';
 
 import BackgroundDeck from '@/components/SwipeableDeck/BackgroundDeck';
-import CardFace from '@/components/SwipeableDeck/CardFace';
+import FlippableCard from '@/components/SwipeableDeck/FlippableCard';
 import {
     APPEAR_ANIMATION_DURATION,
     CARD_RETURN_SPRING,
     DECK_OFFSET,
     DECK_SCALE,
     DISAPPEAR_ANIMATION_DURATION,
+    FLIP_ANIMATION_DURATION,
+    SIDE_OPPONENT,
 } from '@/components/SwipeableDeck/constants';
-import { createParamsMap, getDirection, getSwipeExit, randomCardParams } from '@/components/SwipeableDeck/utils';
+import {
+    buildChosenText,
+    createParamsMap,
+    getDirection,
+    getSwipeExit,
+    randomCardParams,
+} from '@/components/SwipeableDeck/utils';
 
 import styles from '@/components/SwipeableDeck/SwipeableDeck.module.less';
 
-const buildChosenText = (card: CardData, direction: SwipeDirection): string => {
-    const segment = [card.phraseStart, card.options[direction], card.phraseEnd].filter(Boolean).join(' ');
-
-    if (!segment) {
-        return '';
-    }
-
-    return `${segment}${card.hiddenAfter ?? ''}`;
-};
+interface CompletedChoice {
+    cardId: string;
+    direction: SwipeDirection;
+}
 
 function SwipeableDeck() {
     const [deck, setDeck] = React.useState(INITIAL_DECK);
-    const [chosenText, setChosenText] = React.useState('');
-    const [revealedVariant, setRevealedVariant] = React.useState<string | null>(null);
+    const [completedChoices, setCompletedChoices] = React.useState<CompletedChoice[]>([]);
+    const [currentSide, setCurrentSide] = React.useState<CardSide>('front');
+    const [revealedDirection, setRevealedDirection] = React.useState<SwipeDirection | null>(null);
     const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
     const paramsRef = React.useRef(createParamsMap(INITIAL_DECK));
+    const cardsById = React.useMemo(() => Object.fromEntries(INITIAL_DECK.map((card) => [card.id, card])), []);
 
     const currentCard = deck[0] ?? null;
     const backgroundCards = React.useMemo(() => deck.slice(1, 5), [deck]);
     const currentCardId = currentCard?.id ?? null;
-    const currentParams = currentCardId ? paramsRef.current[currentCardId] : undefined;
+    const chosenText = React.useMemo(
+        () =>
+            completedChoices
+                .map((choice) => {
+                    const card = cardsById[choice.cardId];
+                    return card ? buildChosenText(card, choice.direction, currentSide) : '';
+                })
+                .filter(Boolean)
+                .join(' '),
+        [cardsById, completedChoices, currentSide]
+    );
 
     const cardX = useMotionValue(0);
     const cardY = useMotionValue(0);
     const cardOffset = useMotionValue(DECK_OFFSET);
     const cardScale = useMotionValue(DECK_SCALE);
     const cardOpacity = useMotionValue(1);
-    const cardBaseRotate = useMotionValue(currentParams?.rotationDeg ?? 0);
+    const cardBaseRotate = useMotionValue(currentCardId ? (paramsRef.current[currentCardId]?.rotationDeg ?? 0) : 0);
     const mainCardRotate = useTransform(() => cardBaseRotate.get() + cardX.get() / 30);
     const dragOffsetRef = React.useRef({ x: 0, y: 0 });
     const dragDirectionRef = React.useRef<SwipeDirection | null>(null);
@@ -76,7 +91,7 @@ function SwipeableDeck() {
             return undefined;
         }
 
-        setRevealedVariant(null);
+        setRevealedDirection(null);
         dragOffsetRef.current = { x: 0, y: 0 };
         dragDirectionRef.current = null;
 
@@ -115,9 +130,7 @@ function SwipeableDeck() {
                 return;
             }
 
-            const nextSegment = buildChosenText(currentCard, direction);
-
-            setChosenText((previousText) => [previousText, nextSegment].filter(Boolean).join(' '));
+            setCompletedChoices((previousChoices) => [...previousChoices, { cardId: currentCard.id, direction }]);
             setDeck(deck.slice(1));
         },
         [currentCard, deck]
@@ -137,10 +150,10 @@ function SwipeableDeck() {
 
             if (dragDirectionRef.current !== direction) {
                 dragDirectionRef.current = direction;
-                setRevealedVariant(direction ? (currentCard?.options[direction] ?? null) : null);
+                setRevealedDirection(direction);
             }
         },
-        [currentCard, isAnimatingOut]
+        [isAnimatingOut]
     );
 
     const handleDragEnd = React.useCallback(
@@ -158,7 +171,7 @@ function SwipeableDeck() {
             if (!direction) {
                 dragOffsetRef.current = { x: 0, y: 0 };
                 dragDirectionRef.current = null;
-                setRevealedVariant(null);
+                setRevealedDirection(null);
                 animate(cardX, 0, {
                     ...CARD_RETURN_SPRING,
                 });
@@ -190,7 +203,7 @@ function SwipeableDeck() {
                 cardX.set(0);
                 cardY.set(0);
                 cardOpacity.set(0);
-                setRevealedVariant(null);
+                setRevealedDirection(null);
                 handleSwipeComplete(direction);
                 window.requestAnimationFrame(() => {
                     setIsAnimatingOut(false);
@@ -209,7 +222,9 @@ function SwipeableDeck() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.55, ease: [0.18, 0.89, 0.32, 1.15] }}
                 >
-                    <div className={styles.finishedSummaryText}>{chosenText || 'Колода закончилась.'}</div>
+                    <div className={styles.finishedSummaryText}>
+                        {chosenText || (currentSide === 'front' ? 'Колода закончилась.' : 'Špil je završen.')}
+                    </div>
                 </motion.div>
             </div>
         );
@@ -219,11 +234,30 @@ function SwipeableDeck() {
         <div className={styles.screen}>
             <div className={styles.deckLayout}>
                 <div className={styles.summaryPanel}>
-                    <div className={styles.summaryText}>{chosenText || '\u00A0'}</div>
+                    <AnimatePresence initial={false}>
+                        <motion.div
+                            key={currentSide}
+                            className={styles.summaryTextLayer}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                                duration: FLIP_ANIMATION_DURATION / 1000,
+                                ease: [0.455, 0.03, 0.515, 0.955],
+                            }}
+                        >
+                            <div className={styles.summaryText}>{chosenText || '\u00A0'}</div>
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 <div className={styles.stage}>
-                    <BackgroundDeck cards={backgroundCards} deckLength={deck.length} paramsMap={paramsRef.current} />
+                    <BackgroundDeck
+                        cards={backgroundCards}
+                        deckLength={deck.length}
+                        paramsMap={paramsRef.current}
+                        side={currentSide}
+                    />
 
                     <motion.div
                         className={styles.cardWrapper}
@@ -248,11 +282,18 @@ function SwipeableDeck() {
                                 rotate: mainCardRotate,
                                 opacity: cardOpacity,
                             }}
+                            onTap={() => {
+                                if (isAnimatingOut) {
+                                    return;
+                                }
+
+                                setCurrentSide((previousSide) => SIDE_OPPONENT[previousSide]);
+                            }}
                         >
-                            <CardFace
+                            <FlippableCard
                                 card={currentCard}
-                                tone={currentParams?.cardSide ?? 'front'}
-                                revealedVariant={revealedVariant}
+                                side={currentSide}
+                                revealedDirection={revealedDirection}
                             />
                         </motion.div>
                     </motion.div>

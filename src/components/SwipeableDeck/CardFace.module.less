@@ -81,3 +81,39 @@
     text-align: center;
     opacity: 0.95;
 }
+
+@media (max-width: 640px) {
+    .content {
+        padding: 24px 16px 22px;
+    }
+
+    .phraseLayout {
+        gap: 14px;
+    }
+
+    .centerBlock {
+        gap: 8px;
+    }
+
+    .phraseText {
+        font-size: clamp(24px, 6.4vw, 30px);
+        line-height: 1.06;
+        letter-spacing: 0.02em;
+    }
+
+    .compactPhraseText {
+        font-size: clamp(20px, 5.4vw, 24px);
+        line-height: 1.08;
+        letter-spacing: 0.015em;
+    }
+
+    .extraCompactPhraseText {
+        font-size: clamp(17px, 4.8vw, 21px);
+        line-height: 1.1;
+        letter-spacing: 0.01em;
+    }
+
+    .posText {
+        font-size: 13px;
+    }
+}

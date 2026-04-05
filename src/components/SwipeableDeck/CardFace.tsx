@@ -1,12 +1,14 @@
-import type { CardData, CardSide } from '@/types/cards';
+import type { CardData, CardSide, SwipeDirection } from '@/types/cards';
 import { normalizeSpaces } from '@/utils/cardText';
+
+import { getCardTranslation } from '@/components/SwipeableDeck/utils';
 
 import styles from '@/components/SwipeableDeck/CardFace.module.less';
 
 interface CardFaceProps {
     card: CardData;
     tone: CardSide;
-    revealedVariant?: string | null;
+    revealedDirection?: SwipeDirection | null;
 }
 
 const getLongestWordLength = (value: string): number =>
@@ -32,12 +34,13 @@ const getPhraseSizeClassName = (value: string): string => {
     return '';
 };
 
-function CardFace({ card, tone, revealedVariant = null }: CardFaceProps) {
+function CardFace({ card, tone, revealedDirection = null }: CardFaceProps) {
+    const content = getCardTranslation(card, tone);
     const className = [styles.side, tone === 'front' ? styles.frontSide : styles.backSide].join(' ');
-    const hiddenWord = revealedVariant ? normalizeSpaces(revealedVariant) : '…';
-    const phraseStart = card.phraseStart ? normalizeSpaces(card.phraseStart) : null;
-    const phraseEnd = card.phraseEnd ? normalizeSpaces(card.phraseEnd) : null;
-    const variantSizeClassName = revealedVariant ? getPhraseSizeClassName(hiddenWord) : '';
+    const hiddenWord = revealedDirection ? normalizeSpaces(content.options[revealedDirection]) : '…';
+    const phraseStart = content.phraseStart ? normalizeSpaces(content.phraseStart) : null;
+    const phraseEnd = content.phraseEnd ? normalizeSpaces(content.phraseEnd) : null;
+    const variantSizeClassName = revealedDirection ? getPhraseSizeClassName(hiddenWord) : '';
     const phraseStartClassName = phraseStart
         ? [styles.phraseText, getPhraseSizeClassName(phraseStart)].filter(Boolean).join(' ')
         : '';
@@ -58,7 +61,7 @@ function CardFace({ card, tone, revealedVariant = null }: CardFaceProps) {
 
                     <div className={`${styles.segment} ${styles.centerBlock}`}>
                         <div className={variantClassName}>{hiddenWord}</div>
-                        <div className={styles.posText}>({card.pos})</div>
+                        <div className={styles.posText}>({content.pos})</div>
                     </div>
 
                     {phraseEnd ? (

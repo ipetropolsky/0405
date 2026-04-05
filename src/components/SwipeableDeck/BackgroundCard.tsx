@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-import type { CardData, PrecalculatedParams } from '@/types/cards';
+import type { CardData, CardSide, PrecalculatedParams } from '@/types/cards';
 
 import CardFace from '@/components/SwipeableDeck/CardFace';
 import { APPEAR_ANIMATION_DURATION, DECK_OFFSET, DECK_SCALE } from '@/components/SwipeableDeck/constants';
@@ -14,9 +14,10 @@ interface BackgroundCardProps {
     deckLength: number;
     index: number;
     params: PrecalculatedParams;
+    side: CardSide;
 }
 
-function BackgroundCard({ card, deckLength, index, params }: BackgroundCardProps) {
+function BackgroundCard({ card, deckLength, index, params, side }: BackgroundCardProps) {
     return (
         <motion.div
             className={styles.cardWrapper}
@@ -41,7 +42,7 @@ function BackgroundCard({ card, deckLength, index, params }: BackgroundCardProps
                 ease: [0.22, 1, 0.36, 1],
             }}
         >
-            <CardFace card={card} tone={params.cardSide} />
+            <CardFace card={card} tone={side} />
         </motion.div>
     );
 }

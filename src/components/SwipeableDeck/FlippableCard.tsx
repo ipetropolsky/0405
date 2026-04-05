@@ -1,7 +1,7 @@
 import React from 'react';
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion';
 
-import type { CardData, CardSide } from '@/types/cards';
+import type { CardData, CardSide, SwipeDirection } from '@/types/cards';
 
 import CardFace from '@/components/SwipeableDeck/CardFace';
 import { FLIP_ANIMATION_DURATION } from '@/components/SwipeableDeck/constants';
@@ -11,6 +11,7 @@ import styles from '@/components/SwipeableDeck/SwipeableDeck.module.less';
 interface FlippableCardProps {
     card: CardData;
     side: CardSide;
+    revealedDirection?: SwipeDirection | null;
 }
 
 const SIDE_INDEX: Record<CardSide, number> = {
@@ -18,7 +19,7 @@ const SIDE_INDEX: Record<CardSide, number> = {
     back: 1,
 };
 
-function FlippableCard({ card, side }: FlippableCardProps) {
+function FlippableCard({ card, side, revealedDirection = null }: FlippableCardProps) {
     const sideIndex = SIDE_INDEX[side];
     const rotation = useMotionValue(sideIndex);
     const shadow = useMotionValue(1);
@@ -88,7 +89,7 @@ function FlippableCard({ card, side }: FlippableCardProps) {
                     opacity: frontOpacity,
                 }}
             >
-                <CardFace card={card} tone="front" />
+                <CardFace card={card} tone="front" revealedDirection={revealedDirection} />
             </motion.div>
 
             <motion.div
@@ -98,7 +99,7 @@ function FlippableCard({ card, side }: FlippableCardProps) {
                     opacity: backOpacity,
                 }}
             >
-                <CardFace card={card} tone="back" />
+                <CardFace card={card} tone="back" revealedDirection={revealedDirection} />
             </motion.div>
         </div>
     );

@@ -1,4 +1,4 @@
-import type { CardSide, PrecalculatedParams, SwipeDirection } from '@/types/cards';
+import type { CardLocale, CardSide, PrecalculatedParams, SwipeDirection } from '@/types/cards';
 
 export const DEFAULT_CARD_PARAMS: PrecalculatedParams = {
     cardSide: 'front',
@@ -32,4 +32,9 @@ export const ACTION_MESSAGES: Record<SwipeDirection, string> = {
 export const SIDE_OPPONENT: Record<CardSide, CardSide> = {
     front: 'back',
     back: 'front',
+};
+
+export const SIDE_TO_LOCALE: Record<CardSide, CardLocale> = {
+    front: 'ru',
+    back: 'sr',
 };
