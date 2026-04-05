@@ -8,6 +8,6 @@ import { generateEslintConfig, PROJECT_TYPES } from '@hh.ru/eslint-config';
 
 export default [
     ...generateEslintConfig(PROJECT_TYPES.SERVICE),
-    { rules: { 'prettier/prettier': 'off' } },
+    { rules: { 'prettier/prettier': 'off', 'no-continue': 'off' } },
     eslintConfigPrettier,
 ];
