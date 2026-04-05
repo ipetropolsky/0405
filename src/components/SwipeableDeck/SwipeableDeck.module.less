@@ -27,7 +27,6 @@
 .cardWrapper {
     position: absolute;
     inset: 0;
-    transform-style: preserve-3d;
     will-change: transform, opacity;
 }
 
@@ -35,14 +34,17 @@
     position: relative;
     height: 100%;
     width: 100%;
-    transform-style: preserve-3d;
+    will-change: transform, opacity;
 }
 
 .flipScene {
     position: relative;
     height: 100%;
     width: 100%;
+    perspective: 1200px;
     transform-style: preserve-3d;
+    isolation: isolate;
+    will-change: transform;
 }
 
 .shadowLayer {
@@ -65,14 +67,17 @@
     width: 100%;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
 }
 
 .flipFaceFront {
-    transform: rotateY(0deg);
+    transform: translateZ(1px);
 }
 
 .flipFaceBack {
-    transform: rotateY(180deg);
+    transform: translateZ(1px);
 }
 
 .message {

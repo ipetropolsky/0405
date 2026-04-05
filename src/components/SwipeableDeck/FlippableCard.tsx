@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import React from 'react';
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion';
 
 import type { CardData, CardSide } from '@/types/cards';
 
@@ -13,40 +14,95 @@ interface FlippableCardProps {
     isMainCard: boolean;
 }
 
+const SIDE_INDEX: Record<CardSide, number> = {
+    front: 0,
+    back: 1,
+};
+
 function FlippableCard({ card, side, isMainCard }: FlippableCardProps) {
-    const isFrontVisible = side === 'front';
+    const sideIndex = SIDE_INDEX[side];
+    const rotation = useMotionValue(sideIndex);
+    const shadow = useMotionValue(1);
+    const frontRotate = useTransform(rotation, [0, 1], [0, 180]);
+    const backRotate = useTransform(rotation, [0, 1], [180, 360]);
+    const frontOpacity = useTransform(rotation, (value) => (value <= 0.5 ? 1 : 0));
+    const backOpacity = useTransform(rotation, (value) => (value > 0.5 ? 1 : 0));
+    const shadowScaleX = useTransform(shadow, [0, 1], [0, 1]);
+    const previousCardIdRef = React.useRef(card.id);
+    const previousSideRef = React.useRef(sideIndex);
+
+    React.useEffect(() => {
+        const isNewCard = previousCardIdRef.current !== card.id;
+        const didSideChange = previousSideRef.current !== sideIndex;
+
+        previousCardIdRef.current = card.id;
+        previousSideRef.current = sideIndex;
+
+        if (isNewCard) {
+            rotation.jump(sideIndex);
+            shadow.jump(1);
+            return undefined;
+        }
+
+        if (!didSideChange) {
+            return undefined;
+        }
+
+        const rotationAnimation = animate(rotation, sideIndex, {
+            duration: FLIP_ANIMATION_DURATION / 1000,
+            ease: [0.455, 0.03, 0.515, 0.955],
+        });
+        const shadowOut = animate(shadow, 0, {
+            duration: FLIP_ANIMATION_DURATION / 2000,
+            ease: 'easeIn',
+        });
+        let shadowIn: ReturnType<typeof animate> | null = null;
+        const shadowTimeout = window.setTimeout(() => {
+            shadowIn = animate(shadow, 1, {
+                duration: FLIP_ANIMATION_DURATION / 2000,
+                ease: 'easeOut',
+            });
+        }, FLIP_ANIMATION_DURATION / 2);
+
+        return () => {
+            rotationAnimation.stop();
+            shadowOut.stop();
+            shadowIn?.stop();
+            window.clearTimeout(shadowTimeout);
+        };
+    }, [card.id, rotation, shadow, sideIndex]);
 
     return (
-        <motion.div
-            className={styles.flipScene}
-            animate={{ rotateY: isFrontVisible ? 0 : 180 }}
-            transition={{
-                duration: FLIP_ANIMATION_DURATION / 1000,
-                ease: [0.455, 0.03, 0.515, 0.955],
-            }}
-        >
+        <div className={styles.flipScene}>
             <motion.div
                 className={styles.shadowLayer}
-                animate={{
-                    scaleX: [1, 0, 1],
-                    opacity: [1, 0, 1],
-                }}
-                transition={{
-                    duration: FLIP_ANIMATION_DURATION / 1000,
-                    times: [0, 0.5, 1],
-                    ease: ['easeIn', 'easeOut'],
+                style={{
+                    scaleX: shadowScaleX,
+                    opacity: shadow,
                 }}
             />
 
-            <div className={`${styles.flipFace} ${styles.flipFaceFront}`}>
+            <motion.div
+                className={`${styles.flipFace} ${styles.flipFaceFront}`}
+                style={{
+                    rotateY: frontRotate,
+                    opacity: frontOpacity,
+                }}
+            >
                 <CardFace card={card} side="front" isMainCard={isMainCard} />
-            </div>
+            </motion.div>
 
-            <div className={`${styles.flipFace} ${styles.flipFaceBack}`}>
+            <motion.div
+                className={`${styles.flipFace} ${styles.flipFaceBack}`}
+                style={{
+                    rotateY: backRotate,
+                    opacity: backOpacity,
+                }}
+            >
                 <CardFace card={card} side="back" isMainCard={isMainCard} />
-            </div>
-        </motion.div>
+            </motion.div>
+        </div>
     );
 }
 
-export default FlippableCard;
+export default React.memo(FlippableCard);

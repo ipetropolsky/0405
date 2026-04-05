@@ -1,36 +1,23 @@
 import React from 'react';
-import { motion, type PanInfo } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
 import { INITIAL_DECK } from '@/data/initialDeck';
 
+import BackgroundDeck from '@/components/SwipeableDeck/BackgroundDeck';
 import EmptyDeckState from '@/components/SwipeableDeck/EmptyDeckState';
 import FlippableCard from '@/components/SwipeableDeck/FlippableCard';
 import {
     ACTION_MESSAGES,
     APPEAR_ANIMATION_DURATION,
-    DEFAULT_CARD_PARAMS,
+    CARD_RETURN_SPRING,
     DECK_OFFSET,
     DECK_SCALE,
     DISAPPEAR_ANIMATION_DURATION,
     SIDE_OPPONENT,
 } from '@/components/SwipeableDeck/constants';
-import { clamp, createParamsMap, getDirection, getSwipeExit, randomCardParams } from '@/components/SwipeableDeck/utils';
+import { createParamsMap, getDirection, getSwipeExit, randomCardParams } from '@/components/SwipeableDeck/utils';
 
 import styles from '@/components/SwipeableDeck/SwipeableDeck.module.less';
-
-interface ExitState {
-    active: boolean;
-    x: number;
-    y: number;
-    rotate: number;
-}
-
-const createIdleExitState = (rotationDeg: number): ExitState => ({
-    active: false,
-    x: 0,
-    y: 0,
-    rotate: rotationDeg,
-});
 
 function SwipeableDeck() {
     const [deck, setDeck] = React.useState(INITIAL_DECK);
@@ -39,18 +26,25 @@ function SwipeableDeck() {
     const paramsRef = React.useRef(createParamsMap(INITIAL_DECK));
 
     const currentCard = deck[0] ?? null;
-    const nextCard = deck[1] ?? null;
+    const backgroundCards = React.useMemo(() => deck.slice(1, 5), [deck]);
     const currentCardId = currentCard?.id ?? null;
-    const nextCardId = nextCard?.id ?? null;
 
-    const currentParams = currentCardId
-        ? (paramsRef.current[currentCardId] ?? DEFAULT_CARD_PARAMS)
-        : DEFAULT_CARD_PARAMS;
-    const nextParams = nextCardId ? (paramsRef.current[nextCardId] ?? DEFAULT_CARD_PARAMS) : DEFAULT_CARD_PARAMS;
-
-    const [currentSide, setCurrentSide] = React.useState(currentParams.cardSide);
-    const [drag, setDrag] = React.useState({ x: 0, y: 0 });
-    const [exitState, setExitState] = React.useState(createIdleExitState(currentParams.rotationDeg));
+    const currentParams = currentCardId ? paramsRef.current[currentCardId] : undefined;
+    const [currentSideState, setCurrentSideState] = React.useState({
+        cardId: currentCardId,
+        side: currentParams?.cardSide ?? 'front',
+    });
+    const cardX = useMotionValue(0);
+    const cardY = useMotionValue(0);
+    const cardOffset = useMotionValue(DECK_OFFSET);
+    const cardScale = useMotionValue(DECK_SCALE);
+    const cardOpacity = useMotionValue(1);
+    const cardBaseRotate = useMotionValue(currentParams?.rotationDeg ?? 0);
+    const mainCardRotate = useTransform(() => cardBaseRotate.get() + cardX.get() / 30);
+    const currentSide =
+        currentSideState.cardId === currentCardId ? currentSideState.side : (currentParams?.cardSide ?? 'front');
+    const dragOffsetRef = React.useRef({ x: 0, y: 0 });
+    const dragDirectionRef = React.useRef('');
 
     React.useEffect(() => {
         for (const card of deck) {
@@ -68,41 +62,72 @@ function SwipeableDeck() {
         }
     }, [deck]);
 
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         if (!currentCardId) {
-            return;
+            return undefined;
         }
 
-        const params = paramsRef.current[currentCardId] ?? DEFAULT_CARD_PARAMS;
+        const params = paramsRef.current[currentCardId];
 
-        setCurrentSide(params.cardSide);
-        setDrag({ x: 0, y: 0 });
-        setExitState(createIdleExitState(params.rotationDeg));
+        if (!params) {
+            return undefined;
+        }
+
+        setCurrentSideState({
+            cardId: currentCardId,
+            side: params.cardSide,
+        });
         setMessage('');
-    }, [currentCardId]);
+        dragOffsetRef.current = { x: 0, y: 0 };
+        dragDirectionRef.current = '';
+
+        cardX.set(0);
+        cardY.set(0);
+        cardOffset.set(DECK_OFFSET);
+        cardScale.set(DECK_SCALE);
+        cardBaseRotate.set(params.rotationDeg);
+        cardOpacity.set(1);
+
+        const appearanceOptions = {
+            duration: APPEAR_ANIMATION_DURATION / 1000,
+            ease: [0.18, 0.89, 0.32, 1.28] as [number, number, number, number],
+        };
+
+        let rotateAnimation: ReturnType<typeof animate> | null = null;
+        let scaleAnimation: ReturnType<typeof animate> | null = null;
+        let offsetAnimation: ReturnType<typeof animate> | null = null;
+        const frameId = window.requestAnimationFrame(() => {
+            rotateAnimation = animate(cardBaseRotate, 0, appearanceOptions);
+            scaleAnimation = animate(cardScale, 1, appearanceOptions);
+            offsetAnimation = animate(cardOffset, 0, appearanceOptions);
+        });
+
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            rotateAnimation?.stop();
+            scaleAnimation?.stop();
+            offsetAnimation?.stop();
+        };
+    }, [cardBaseRotate, cardOffset, cardOpacity, cardScale, cardX, cardY, currentCardId]);
 
     const handleFlip = React.useCallback(() => {
         if (!currentCard || isAnimatingOut) {
             return;
         }
 
-        setCurrentSide((previousSide) => SIDE_OPPONENT[previousSide]);
-    }, [currentCard, isAnimatingOut]);
+        setCurrentSideState({
+            cardId: currentCardId,
+            side: SIDE_OPPONENT[currentSide],
+        });
+    }, [currentCard, currentCardId, currentSide, isAnimatingOut]);
 
     const handleSwipeComplete = React.useCallback(
-        (direction: 'left' | 'right' | 'up' | 'down') => {
+        (_direction: 'left' | 'right' | 'up' | 'down') => {
             if (!currentCard) {
                 return;
             }
 
-            const movedCard = currentCard;
             const rest = deck.slice(1);
-
-            if (direction === 'left') {
-                paramsRef.current[movedCard.id] = randomCardParams();
-                setDeck([...rest, movedCard]);
-                return;
-            }
 
             setDeck(rest);
         },
@@ -118,9 +143,14 @@ function SwipeableDeck() {
             const x = info.offset.x;
             const y = info.offset.y;
             const direction = getDirection(x, y);
+            const nextMessage = direction ? ACTION_MESSAGES[direction] : '';
 
-            setDrag({ x, y });
-            setMessage(direction ? ACTION_MESSAGES[direction] : '');
+            dragOffsetRef.current = { x, y };
+
+            if (dragDirectionRef.current !== nextMessage) {
+                dragDirectionRef.current = nextMessage;
+                setMessage(nextMessage);
+            }
         },
         [isAnimatingOut]
     );
@@ -136,29 +166,44 @@ function SwipeableDeck() {
             const direction = getDirection(x, y);
 
             if (!direction) {
-                setDrag({ x: 0, y: 0 });
+                dragOffsetRef.current = { x: 0, y: 0 };
+                dragDirectionRef.current = '';
                 setMessage('');
+                animate(cardX, 0, {
+                    ...CARD_RETURN_SPRING,
+                });
+                animate(cardY, 0, {
+                    ...CARD_RETURN_SPRING,
+                });
                 return;
             }
 
             const exit = getSwipeExit(direction);
 
             setIsAnimatingOut(true);
-            setExitState({
-                active: true,
-                x: exit.x,
-                y: exit.y,
-                rotate: exit.rotate,
-            });
             setMessage('');
-            setDrag({ x: 0, y: 0 });
+            dragOffsetRef.current = { x: 0, y: 0 };
+            dragDirectionRef.current = '';
+            const opacityAnimation = animate(cardOpacity, 0, {
+                duration: DISAPPEAR_ANIMATION_DURATION / 1000,
+                ease: [0.22, 1, 0.36, 1],
+            });
+            animate(cardX, exit.x, {
+                duration: DISAPPEAR_ANIMATION_DURATION / 1000,
+                ease: [0.22, 1, 0.36, 1],
+            });
+            animate(cardY, exit.y, {
+                duration: DISAPPEAR_ANIMATION_DURATION / 1000,
+                ease: [0.22, 1, 0.36, 1],
+            });
 
             window.setTimeout(() => {
+                opacityAnimation.stop();
                 handleSwipeComplete(direction);
                 setIsAnimatingOut(false);
             }, DISAPPEAR_ANIMATION_DURATION);
         },
-        [currentCard, handleSwipeComplete, isAnimatingOut]
+        [cardOpacity, cardX, cardY, currentCard, handleSwipeComplete, isAnimatingOut]
     );
 
     if (!currentCard) {
@@ -172,124 +217,51 @@ function SwipeableDeck() {
     return (
         <div className={styles.screen}>
             <div className={styles.stage}>
-                {deck.slice(0, 5).map((card, index) => {
-                    const params = paramsRef.current[card.id] ?? DEFAULT_CARD_PARAMS;
-                    const isMainCard = index === 0;
+                <BackgroundDeck cards={backgroundCards} deckLength={deck.length} paramsMap={paramsRef.current} />
 
-                    if (!isMainCard) {
-                        return (
-                            <motion.div
-                                key={`${index}:${card.id}`}
-                                className={styles.cardWrapper}
-                                style={{
-                                    zIndex: deck.length - index,
-                                    pointerEvents: 'none',
-                                }}
-                                initial={{
-                                    y: DECK_OFFSET,
-                                    scale: DECK_SCALE,
-                                    rotate: params.rotationDeg,
-                                    opacity: 1 - 0.1 * (index - 1),
-                                }}
-                                animate={{
-                                    y: DECK_OFFSET,
-                                    scale: DECK_SCALE,
-                                    rotate: params.rotationDeg,
-                                    opacity: clamp(1 - 0.1 * (index - 1), 0.55, 1),
-                                }}
-                                transition={{
-                                    duration: APPEAR_ANIMATION_DURATION / 1000,
-                                    ease: [0.22, 1, 0.36, 1],
-                                }}
-                            >
-                                <FlippableCard card={card} side={params.cardSide} isMainCard={false} />
-                            </motion.div>
-                        );
-                    }
+                <motion.div
+                    className={styles.cardWrapper}
+                    style={{
+                        zIndex: deck.length,
+                        cursor: isAnimatingOut ? 'default' : 'grab',
+                        x: cardX,
+                        y: cardY,
+                    }}
+                    drag={!isAnimatingOut}
+                    dragElastic={0.08}
+                    dragMomentum={false}
+                    onDrag={handleDrag}
+                    onDragEnd={handleDragEnd}
+                    onClick={(event) => {
+                        if (Math.abs(dragOffsetRef.current.x) > 6 || Math.abs(dragOffsetRef.current.y) > 6) {
+                            return;
+                        }
 
-                    const liveRotate = currentParams.rotationDeg + drag.x / 30;
-                    const liveRotateY = drag.x / 5;
-                    const liveRotateX = -drag.y / 10;
+                        const target = event.target as HTMLElement;
 
-                    return (
-                        <motion.div
-                            key={`${index}:${card.id}`}
-                            className={styles.cardWrapper}
-                            style={{
-                                zIndex: deck.length - index,
-                                cursor: isAnimatingOut ? 'default' : 'grab',
-                            }}
-                            drag={!isAnimatingOut}
-                            dragElastic={0.08}
-                            dragMomentum={false}
-                            dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-                            onDrag={handleDrag}
-                            onDragEnd={handleDragEnd}
-                            onClick={(event) => {
-                                if (Math.abs(drag.x) > 6 || Math.abs(drag.y) > 6) {
-                                    return;
-                                }
+                        if (target.closest('[data-no-flip="true"]')) {
+                            return;
+                        }
 
-                                const target = event.target as HTMLElement;
+                        handleFlip();
+                    }}
+                >
+                    <motion.div
+                        className={styles.card3dShell}
+                        style={{
+                            y: cardOffset,
+                            scale: cardScale,
+                            rotate: mainCardRotate,
+                            opacity: cardOpacity,
+                        }}
+                    >
+                        <div className={styles.message}>
+                            <div className={styles.messageText}>{message}</div>
+                        </div>
 
-                                if (target.closest('[data-no-flip="true"]')) {
-                                    return;
-                                }
-
-                                handleFlip();
-                            }}
-                            initial={{
-                                y: DECK_OFFSET,
-                                scale: DECK_SCALE,
-                                rotate: nextParams.rotationDeg,
-                                opacity: 1,
-                            }}
-                            animate={
-                                exitState.active
-                                    ? {
-                                          x: exitState.x,
-                                          y: exitState.y,
-                                          rotate: exitState.rotate,
-                                          opacity: 0,
-                                          scale: 1,
-                                      }
-                                    : {
-                                          x: drag.x,
-                                          y: drag.y,
-                                          scale: 1,
-                                          rotate: liveRotate,
-                                          opacity: 1,
-                                      }
-                            }
-                            transition={
-                                exitState.active
-                                    ? {
-                                          duration: DISAPPEAR_ANIMATION_DURATION / 1000,
-                                          ease: [0.22, 1, 0.36, 1],
-                                      }
-                                    : {
-                                          type: 'spring',
-                                          stiffness: 380,
-                                          damping: 28,
-                                          mass: 0.8,
-                                      }
-                            }
-                        >
-                            <div
-                                className={styles.card3dShell}
-                                style={{
-                                    transform: `perspective(1200px) rotateX(${liveRotateX}deg) rotateY(${liveRotateY}deg)`,
-                                }}
-                            >
-                                <div className={styles.message}>
-                                    <div className={styles.messageText}>{message}</div>
-                                </div>
-
-                                <FlippableCard card={card} side={currentSide} isMainCard />
-                            </div>
-                        </motion.div>
-                    );
-                })}
+                        <FlippableCard card={currentCard} side={currentSide} isMainCard />
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );

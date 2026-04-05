@@ -11,6 +11,12 @@ export const MAX_ROTATION_ANGLE_DEG = 10;
 export const APPEAR_ANIMATION_DURATION = 500;
 export const DISAPPEAR_ANIMATION_DURATION = 500;
 export const FLIP_ANIMATION_DURATION = 500;
+export const CARD_RETURN_SPRING = {
+    type: 'spring' as const,
+    stiffness: 240,
+    damping: 16,
+    mass: 0.9,
+};
 
 export const SAFE_ZONE_RADIUS_X = 50;
 export const SAFE_ZONE_RADIUS_Y = 40;
