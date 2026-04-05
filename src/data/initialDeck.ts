@@ -2,8 +2,6 @@ import type { CardData } from '@/types/cards';
 
 export const CORRECT_OPTION_IDS_BASE64 = 'MS4yfDIuMnwzLjJ8NC40fDUuMXw2LjJ8Ny40fDguMw==';
 
-export const SUCCESS_TEXT = 'Правильно! Активируй свой доступ в кабинете GoWords на z.ai';
-
 export const INITIAL_DECK: CardData[] = [
     {
         id: '1',

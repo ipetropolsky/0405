@@ -2,7 +2,8 @@ import React from 'react';
 import confetti from 'canvas-confetti';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
-import { CORRECT_OPTION_IDS_BASE64, INITIAL_DECK, SUCCESS_TEXT } from '@/data/initialDeck';
+import { CORRECT_OPTION_IDS_BASE64, INITIAL_DECK } from '@/data/initialDeck';
+import { UI_TEXT } from '@/data/uiText';
 import type { CardSide, SwipeDirection } from '@/types/cards';
 
 import BackgroundDeck from '@/components/SwipeableDeck/BackgroundDeck';
@@ -41,25 +42,6 @@ interface CompletedSegment {
 
 const CHECKING_DELAY_MS = 3000;
 const CONFETTI_BURST_DELAYS = [0, 650, 1300] as const;
-
-const UI_TEXT = {
-    front: {
-        check: 'Проверить',
-        retry: 'Вызов принят!',
-        checking: 'Идёт проверка результата…',
-        fallback: 'Колода закончилась.',
-        error1: 'Почти получилось :)',
-        error2: 'Попробуй ещё, подарок ждёт!',
-    },
-    back: {
-        check: 'Proveri',
-        retry: 'Izazov prihvaćen!',
-        checking: 'Proveravamo rezultat…',
-        fallback: 'Špil je završen.',
-        error1: 'Zamalo :)',
-        error2: 'Pokušaj ponovo, poklon te čeka!',
-    },
-} as const;
 
 const encodeOptionIds = (optionIds: readonly string[]): string => window.btoa(optionIds.join('|'));
 
@@ -495,7 +477,7 @@ function SwipeableDeck() {
                                 );
                             })
                         ) : (
-                            <span>{uiText.fallback}</span>
+                            <span>{uiText.emptyResult}</span>
                         )}
                     </div>
 
@@ -515,7 +497,7 @@ function SwipeableDeck() {
                         </div>
                     ) : null}
 
-                    {finalStatus === 'success' ? <div className={styles.successText}>{SUCCESS_TEXT}</div> : null}
+                    {finalStatus === 'success' ? <div className={styles.successText}>{uiText.success}</div> : null}
 
                     {finalStatus === 'error' ? (
                         <div className={styles.errorText}>
