@@ -2,7 +2,7 @@ import React from 'react';
 import confetti from 'canvas-confetti';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
-import { CORRECT_OPTION_IDS, INITIAL_DECK, SUCCESS_TEXT } from '@/data/initialDeck';
+import { CORRECT_OPTION_IDS_BASE64, INITIAL_DECK, SUCCESS_TEXT } from '@/data/initialDeck';
 import type { CardSide, SwipeDirection } from '@/types/cards';
 
 import BackgroundDeck from '@/components/SwipeableDeck/BackgroundDeck';
@@ -61,6 +61,14 @@ const UI_TEXT = {
     },
 } as const;
 
+const encodeOptionIds = (optionIds: readonly string[]): string => window.btoa(optionIds.join('|'));
+
+const decodeOptionIds = (encodedOptionIds: string): string[] => {
+    const decoded = window.atob(encodedOptionIds);
+
+    return decoded ? decoded.split('|') : [];
+};
+
 const getDirectionByOptionId = (cardId: string, optionId: string): SwipeDirection => {
     const card = INITIAL_DECK.find((deckCard) => deckCard.id === cardId);
 
@@ -98,16 +106,20 @@ const getBubuPreset = (): { deck: typeof INITIAL_DECK; completedChoices: Complet
     const bubu = new URLSearchParams(window.location.search).get('bubu');
 
     if (bubu === 'true') {
+        const correctOptionIds = decodeOptionIds(CORRECT_OPTION_IDS_BASE64);
+
         return {
             deck: [],
-            completedChoices: createCompletedChoices(CORRECT_OPTION_IDS),
+            completedChoices: createCompletedChoices(correctOptionIds),
         };
     }
 
     if (bubu === 'false') {
+        const correctOptionIds = decodeOptionIds(CORRECT_OPTION_IDS_BASE64);
+
         return {
             deck: [],
-            completedChoices: createCompletedChoices([...CORRECT_OPTION_IDS.slice(0, -1), '8.4']),
+            completedChoices: createCompletedChoices([...correctOptionIds.slice(0, -1), '8.4']),
         };
     }
 
@@ -131,6 +143,7 @@ function SwipeableDeck() {
     const currentCard = deck[0] ?? null;
     const backgroundCards = React.useMemo(() => deck.slice(1, 5), [deck]);
     const currentCardId = currentCard?.id ?? null;
+    const correctOptionIds = React.useMemo(() => decodeOptionIds(CORRECT_OPTION_IDS_BASE64), []);
     const completedSegmentsBySide = React.useMemo<Record<CardSide, CompletedSegment[]>>(
         () => ({
             front: completedChoices
@@ -166,22 +179,24 @@ function SwipeableDeck() {
         }),
         [completedSegmentsBySide]
     );
-    const isCorrectResult = React.useMemo(
-        () =>
-            completedChoices.length === CORRECT_OPTION_IDS.length &&
-            completedChoices.every((choice, index) => choice.optionId === CORRECT_OPTION_IDS[index]),
+    const completedOptionIdsBase64 = React.useMemo(
+        () => encodeOptionIds(completedChoices.map((choice) => choice.optionId)),
         [completedChoices]
+    );
+    const isCorrectResult = React.useMemo(
+        () => completedOptionIdsBase64 === CORRECT_OPTION_IDS_BASE64,
+        [completedOptionIdsBase64]
     );
     const incorrectIndices = React.useMemo(
         () =>
             completedSegments.reduce<number[]>((indices, segment, index) => {
-                if (segment.optionId !== CORRECT_OPTION_IDS[index]) {
+                if (segment.optionId !== correctOptionIds[index]) {
                     indices.push(index);
                 }
 
                 return indices;
             }, []),
-        [completedSegments]
+        [completedSegments, correctOptionIds]
     );
     const shouldHideLastSegment = React.useMemo(() => {
         const lastIndex = completedSegments.length - 1;
