@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { CardData, CardSide, SwipeDirection } from '@/types/cards';
-import { estimateLinesCount, normalizeSpaces, splitTextToLines } from '@/utils/cardText';
+import { normalizeSpaces } from '@/utils/cardText';
 
 import { getCardTranslation } from '@/components/SwipeableDeck/utils';
 
@@ -13,84 +13,36 @@ interface CardFaceProps {
     revealedDirection?: SwipeDirection | null;
 }
 
-interface FittedPhraseBlockProps {
+interface PhraseBlockProps {
     text: string;
-    maxFontSize: number;
-    minFontSize: number;
-    widthRatio: number;
     className?: string;
 }
 
-const getLongestLine = (lines: string[]) =>
-    lines.reduce((longestLine, line) => (line.length > longestLine.length ? line : longestLine), lines[0] ?? '');
+const phraseSplitRegExp = /(?<=-)| +/g;
 
-function FittedPhraseBlock({ text, maxFontSize, minFontSize, widthRatio, className = '' }: FittedPhraseBlockProps) {
+const getPhraseSizeClassName = (text: string) => {
+    const parts = text.split(phraseSplitRegExp).filter(Boolean);
+    const longestPartLength = parts.reduce((maxLength, part) => Math.max(maxLength, part.length), 0);
+
+    if (longestPartLength >= 14) {
+        return styles.extraCompactPhraseText;
+    }
+
+    if (longestPartLength >= 9) {
+        return styles.compactPhraseText;
+    }
+
+    return '';
+};
+
+function PhraseBlock({ text, className = '' }: PhraseBlockProps) {
     const normalizedText = React.useMemo(() => normalizeSpaces(text), [text]);
-    const lines = React.useMemo(
-        () => splitTextToLines(normalizedText, estimateLinesCount(normalizedText)),
-        [normalizedText]
-    );
-    const longestLine = React.useMemo(() => getLongestLine(lines), [lines]);
-    const containerRef = React.useRef<HTMLDivElement>(null);
-    const measureRef = React.useRef<HTMLSpanElement>(null);
-    const [fontSize, setFontSize] = React.useState(maxFontSize);
-
-    React.useLayoutEffect(() => {
-        const container = containerRef.current;
-        const measure = measureRef.current;
-
-        if (!container || !measure) {
-            return undefined;
-        }
-
-        const updateFontSize = () => {
-            const containerWidth = container.clientWidth;
-            const measuredWidth = measure.getBoundingClientRect().width;
-
-            if (!containerWidth || !measuredWidth) {
-                setFontSize(maxFontSize);
-                return;
-            }
-
-            const targetWidth = containerWidth * widthRatio;
-            const nextFontSize = Math.max(
-                minFontSize,
-                Math.min(maxFontSize, (targetWidth / measuredWidth) * maxFontSize)
-            );
-
-            setFontSize((previousSize) => (Math.abs(previousSize - nextFontSize) < 0.5 ? previousSize : nextFontSize));
-        };
-
-        updateFontSize();
-
-        const resizeObserver = new ResizeObserver(updateFontSize);
-        resizeObserver.observe(container);
-
-        return () => {
-            resizeObserver.disconnect();
-        };
-    }, [longestLine, maxFontSize, minFontSize, widthRatio]);
 
     return (
-        <div ref={containerRef} className={styles.fittedTextContainer}>
-            <span
-                ref={measureRef}
-                className={[styles.phraseText, className, styles.measureText].filter(Boolean).join(' ')}
-                style={{ fontSize: `${maxFontSize}px` }}
-            >
-                {longestLine}
-            </span>
-
-            <div
-                className={[styles.phraseText, className].filter(Boolean).join(' ')}
-                style={{ fontSize: `${fontSize}px` }}
-            >
-                {lines.map((line, index) => (
-                    <span key={`${line}:${index}`} className={styles.fittedLine}>
-                        {line}
-                    </span>
-                ))}
-            </div>
+        <div
+            className={[styles.phraseText, getPhraseSizeClassName(normalizedText), className].filter(Boolean).join(' ')}
+        >
+            <span className={styles.phraseTextInner}>{normalizedText}</span>
         </div>
     );
 }
@@ -108,24 +60,18 @@ function CardFace({ card, tone, revealedDirection = null }: CardFaceProps) {
                 <div className={styles.phraseLayout}>
                     {phraseStart ? (
                         <div className={styles.segment}>
-                            <FittedPhraseBlock text={phraseStart} maxFontSize={36} minFontSize={18} widthRatio={0.92} />
+                            <PhraseBlock text={phraseStart} />
                         </div>
                     ) : null}
 
                     <div className={`${styles.segment} ${styles.centerBlock}`}>
-                        <FittedPhraseBlock
-                            text={hiddenWord}
-                            maxFontSize={42}
-                            minFontSize={22}
-                            widthRatio={0.8}
-                            className={styles.variantWord}
-                        />
+                        <PhraseBlock text={hiddenWord} className={styles.variantWord} />
                         <div className={styles.posText}>({content.pos})</div>
                     </div>
 
                     {phraseEnd ? (
                         <div className={styles.segment}>
-                            <FittedPhraseBlock text={phraseEnd} maxFontSize={36} minFontSize={18} widthRatio={0.92} />
+                            <PhraseBlock text={phraseEnd} />
                         </div>
                     ) : null}
                 </div>
