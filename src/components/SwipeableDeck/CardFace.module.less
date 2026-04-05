@@ -53,6 +53,7 @@
 
 .phraseText {
     --phrase-line-height: clamp(34px, 9vw, 40px);
+    --reserved-lines: 1;
     font-family: 'Roboto Slab', serif;
     font-size: clamp(30px, 8vw, 36px);
     font-weight: 800;
@@ -60,7 +61,7 @@
     align-items: flex-end;
     justify-content: center;
     width: 100%;
-    min-height: var(--phrase-line-height);
+    min-height: calc(var(--phrase-line-height) * var(--reserved-lines));
     letter-spacing: 0.03em;
     text-align: center;
     text-transform: uppercase;
