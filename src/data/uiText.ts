@@ -1,4 +1,6 @@
-export const UI_TEXT = {
+import { makeNBSP } from '@/utils/cardText';
+
+const rawUiText = {
     front: {
         check: 'Проверить',
         retry: 'Вызов принят!',
@@ -18,3 +20,13 @@ export const UI_TEXT = {
         error2: 'Pokušaj ponovo, poklon te čeka!',
     },
 } as const;
+
+const normalizeUiText = <T extends Record<string, Record<string, string>>>(textMap: T): T =>
+    Object.fromEntries(
+        Object.entries(textMap).map(([locale, localeText]) => [
+            locale,
+            Object.fromEntries(Object.entries(localeText).map(([key, value]) => [key, makeNBSP(value)])),
+        ])
+    ) as T;
+
+export const UI_TEXT = normalizeUiText(rawUiText);
