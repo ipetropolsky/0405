@@ -460,13 +460,13 @@ function SwipeableDeck() {
     );
 
     const handleCheckResult = React.useCallback(() => {
-        if (finalStatus === 'error') {
-            window.location.reload();
+        if (finalStatus === 'error' || finalStatus === 'checking') {
             return;
         }
 
-        if (finalStatus !== 'idle') {
-            return;
+        if (checkingTimeoutRef.current !== null) {
+            window.clearTimeout(checkingTimeoutRef.current);
+            checkingTimeoutRef.current = null;
         }
 
         setFinalStatus('checking');
@@ -514,9 +514,9 @@ function SwipeableDeck() {
                         className={styles.resultButton}
                         type="button"
                         onClick={handleCheckResult}
-                        disabled={finalStatus === 'checking' || finalStatus === 'success'}
+                        disabled={finalStatus === 'checking' || finalStatus === 'error'}
                     >
-                        {finalStatus === 'error' ? uiText.retry : uiText.check}
+                        {uiText.check}
                     </button>
 
                     {finalStatus === 'checking' ? (
@@ -529,10 +529,21 @@ function SwipeableDeck() {
                     {finalStatus === 'success' ? <div className={styles.successText}>{uiText.success}</div> : null}
 
                     {finalStatus === 'error' ? (
-                        <div className={styles.errorText}>
-                            <div>{uiText.error1}</div>
-                            <div>{uiText.error2}</div>
-                        </div>
+                        <>
+                            <div className={styles.errorText}>
+                                <div>{uiText.error1}</div>
+                                <div>{uiText.error2}</div>
+                            </div>
+                            <button
+                                className={styles.resultButton}
+                                type="button"
+                                onClick={() => {
+                                    window.location.reload();
+                                }}
+                            >
+                                {uiText.retry}
+                            </button>
+                        </>
                     ) : null}
                 </motion.div>
             </div>
