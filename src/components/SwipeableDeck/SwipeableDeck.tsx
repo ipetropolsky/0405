@@ -42,6 +42,8 @@ interface CompletedSegment {
 
 const CHECKING_DELAY_MS = 3000;
 const CONFETTI_BURST_DELAYS = [0, 650, 1300] as const;
+// https://vite.dev/guide/env-and-mode
+const IS_DEV = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
 const ARROW_DIRECTION_MAP: Record<string, SwipeDirection> = {
     ArrowLeft: 'left',
     ArrowRight: 'right',
@@ -87,7 +89,7 @@ const createCompletedChoices = (optionIds: readonly string[]): CompletedChoice[]
     });
 
 const getBubuPreset = (): { deck: typeof INITIAL_DECK; completedChoices: CompletedChoice[] } | null => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !IS_DEV) {
         return null;
     }
 
@@ -222,7 +224,7 @@ function SwipeableDeck() {
     }, []);
 
     React.useEffect(() => {
-        if (!currentCard || isAnimatingOut) {
+        if (!IS_DEV || !currentCard || isAnimatingOut) {
             return undefined;
         }
 
