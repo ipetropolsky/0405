@@ -1,4 +1,4 @@
-# Project template
+# Ко дню рожденья друга
 
 ## Настройка проекта
 
@@ -8,6 +8,10 @@ npm i
 
 # Start dev server (localhost:3000)
 npm run dev
+
+# Test production build
+npm run build
+npm run preview
 ```
 
 ## Проверка кода
@@ -29,7 +33,10 @@ npm run check
 # Production build to /build
 npm run build
 
-# Deploy to GitHub Pages
+# Test production build
+npm run preview
+
+# Deploy to GitHub Pages (includes build stage)
 npm run deploy
 ```
 
