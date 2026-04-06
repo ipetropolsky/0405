@@ -105,7 +105,7 @@ export const INITIAL_DECK: CardData[] = [
         },
         ru: {
             pos: 'сущ.',
-            phraseStart: 'с',
+            phraseStart: 'с твоим',
             options: {
                 left: 'Днём Рождение',
                 right: 'Днём Рождения',
@@ -115,6 +115,7 @@ export const INITIAL_DECK: CardData[] = [
         },
         sr: {
             pos: 'imen.',
+            phraseStart: 'sa tvojim',
             options: {
                 left: 'Rođendanje',
                 right: 'Rođendan',
