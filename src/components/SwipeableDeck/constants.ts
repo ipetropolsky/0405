@@ -11,6 +11,7 @@ export const MAX_ROTATION_ANGLE_DEG = 10;
 export const APPEAR_ANIMATION_DURATION = 500;
 export const DISAPPEAR_ANIMATION_DURATION = 500;
 export const FLIP_ANIMATION_DURATION = 500;
+export const CARD_TEXT_START_OFFSET_PERCENT = 20;
 export const CARD_RETURN_SPRING = {
     type: 'spring' as const,
     stiffness: 240,
